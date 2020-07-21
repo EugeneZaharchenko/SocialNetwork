@@ -1,22 +1,25 @@
-from peewee import (Model, SqliteDatabase, DoubleField, CharField, IntegerField, DateTimeField,
-                    datetime as peewee_datetime)
-from config import DB_NAME
+# from config import DB_NAME
+from app import db
+from datetime import datetime
 
 
-network_db = SqliteDatabase(DB_NAME)
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    password_hash = db.Column(db.String(128))
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
+
+    def __repr__(self):
+        return '<User {}>'.format(self.username)
 
 
-class User(Model):
-    class Meta:
-        db = network_db
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.String(140))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    created = DateTimeField(default=peewee_datetime.datetime.now)
-    visit = DateTimeField(default=peewee_datetime.datetime.now)
-    user_name = CharField(max_length=100)
-    user_email = CharField(max_length=100)
+    def __repr__(self):
+        return '<Post {}>'.format(self.body)
 
-    def to_dict(self):
-        return self._data
-
-
-User.create_table(True)
