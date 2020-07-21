@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, flash, redirect, url_for, session, request, logging
+from flask import Flask, session, request, logging
 from config import SECRET_KEY, DB_NAME
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
