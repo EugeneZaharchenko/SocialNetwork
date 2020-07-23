@@ -136,7 +136,6 @@ def like_action(current_user, user_id, post_id, action):
 
 
 @app.route('/analitics/')
-# @token_required
 def get_analitics():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")

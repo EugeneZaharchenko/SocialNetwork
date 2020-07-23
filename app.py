@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, request, logging
+from flask import Flask
 from config import SECRET_KEY, DB_NAME
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
