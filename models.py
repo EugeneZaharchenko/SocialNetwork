@@ -9,6 +9,7 @@ class User(db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password = db.Column(db.String(128))
+    # timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     posts = db.relationship('Post', foreign_keys='Post.author_id', backref='author', lazy='dynamic')
 
     liked = db.relationship(
@@ -40,6 +41,7 @@ class PostLike(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
 
 class Post(db.Model):
@@ -51,4 +53,4 @@ class Post(db.Model):
     likes = db.relationship('PostLike', backref='post', lazy='dynamic')
 
     def __repr__(self):
-        return '<Post {}>'.format(self.body)
+        return '<Post id {0} containing {1}>'.format(self.id, self.body)

@@ -1,4 +1,4 @@
-import datetime
+from _datetime import datetime
 import uuid
 from functools import wraps
 
@@ -34,7 +34,7 @@ def token_required(f):
 
 @app.route('/')
 def home():
-    status_code = Response(status=201)
+    status_code = Response(status=200)
     return status_code
 
 
@@ -77,7 +77,7 @@ def login():
     return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
-@app.route('/user/<public_id>', methods=['GET'])
+@app.route('/user/<public_id>')
 @token_required
 def get_one_user(current_user, public_id):
     user = User.query.filter_by(public_id=public_id).first()
@@ -133,3 +133,19 @@ def like_action(current_user, user_id, post_id, action):
         db.session.commit()
 
     return jsonify({'message': 'New {0} of user {1} to post_id {2} created!'.format(action, user_id, post_id)})
+
+
+@app.route('/analitics/')
+# @token_required
+def get_analitics():
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    start = datetime.strptime(date_from, format('%Y-%m-%d'))
+    end = datetime.strptime(date_to, format('%Y-%m-%d'))
+
+    likes = PostLike.query.filter(PostLike.timestamp >= start).filter(PostLike.timestamp <= end).all()
+    print(len(likes))
+    status_code = Response(status=200)
+    return status_code
+        # .order_by(Post.time)
