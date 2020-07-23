@@ -7,7 +7,7 @@ from flask import jsonify, request, make_response, Response, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app, db
-from models import User, Post
+from models import User, Post, PostLike
 
 
 def token_required(f):
@@ -19,13 +19,13 @@ def token_required(f):
             token = request.headers['x-access-token']
 
         if not token:
-            return jsonify({'message' : 'Token is missing!'}), 401
+            return jsonify({'message': 'Token is missing!'}), 401
 
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'])
             current_user = User.query.filter_by(public_id=data['public_id']).first()
         except:
-            return jsonify({'message' : 'Token is invalid!'}), 401
+            return jsonify({'message': 'Token is invalid!'}), 401
 
         return f(current_user, *args, **kwargs)
 
@@ -39,7 +39,6 @@ def home():
 
 
 @app.route('/signup', methods=['POST'])
-# @token_required
 def create_user():
     data = request.get_json()
 
@@ -61,44 +60,37 @@ def login():
     print(str(auth))
 
     if not auth or not auth.username or not auth.password:
-        return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
+        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
     user = User.query.filter_by(username=auth.username).first()
 
     if not user:
-        return make_response('No such user', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
+        return make_response('No such user', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
     if check_password_hash(user.password, auth.password):
-        token = jwt.encode({'public_id' : user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+        token = jwt.encode(
+            {'public_id': user.public_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=120)},
+            app.config['SECRET_KEY'])
 
-        return jsonify({'token' : token.decode('UTF-8')})
+        return jsonify({'token': token.decode('UTF-8')})
 
-    return make_response('Could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required!"'})
-
-
-@app.route('/logout')
-# @is_logged_in
-def logout():
-    session.clear()
-    # flash('You are now logged out', 'success')
-    # return redirect(url_for('login'))
+    return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
 @app.route('/user/<public_id>', methods=['GET'])
 @token_required
 def get_one_user(current_user, public_id):
-
     user = User.query.filter_by(public_id=public_id).first()
 
     if not user:
-        return jsonify({'message' : 'No user found!'})
+        return jsonify({'message': 'No user found!'})
 
     user_data = {}
     user_data['public_id'] = user.public_id
     user_data['name'] = user.username
     user_data['password'] = user.password
 
-    return jsonify({'user' : user_data})
+    return jsonify({'user': user_data})
 
 
 @app.route('/user/<string:username>/add_post', methods=['POST'])
@@ -110,7 +102,7 @@ def add_post(current_user, username):
     user = User.query.filter_by(username=username).first()
     user_id = user.id
 
-    new_post = Post(body=body, user_id=user_id)
+    new_post = Post(body=body, author_id=user_id)
 
     db.session.add(new_post)
     db.session.commit()
@@ -118,22 +110,26 @@ def add_post(current_user, username):
     return jsonify({'message': 'New post of user {} created!'.format(username)})
 
 
-@app.route('/like/<int:post_id>/<int:user_id>')
-# @login_required
-def like(post_id,user_id):
-    posts = Post.select().where(Post.id == post_id)
-    if posts.count() == 0:
+@app.route('/user/<int:user_id>/post/<int:post_id>/action/<string:action>', methods=['POST'])
+@token_required
+def like_action(current_user, user_id, post_id, action):
+    posts = Post.query.filter(Post.id == post_id).all()
+    if len(posts) == 0:
         abort(404)
+    print(posts)
 
-    post = Post.select().where(Post.id == post_id).get()
+    post = Post.query.filter_by(id=post_id).first_or_404()
+    print(post.body)
 
+    user = User.query.filter_by(id=user_id).first()
 
-@app.route('/dislike/<int:post_id>/<int:user_id>')
-# @login_required
-def dislike(post_id,user_id):
-    posts = Post.select().where(Post.id == post_id)
+    if action == 'like':
+        post.recipient_id = user_id
+        user.like_post(post)
+        db.session.commit()
+    if action == 'unlike':
+        post.recipient_id = 0
+        user.unlike_post(post)
+        db.session.commit()
 
-    if posts.count() == 0:
-        abort(404)
-
-    post = Post.select().where(Post.id == post_id).get()
+    return jsonify({'message': 'New {0} of user {1} to post_id {2} created!'.format(action, user_id, post_id)})
