@@ -1,4 +1,4 @@
-from _datetime import datetime
+import datetime
 import uuid
 from functools import wraps
 
@@ -141,8 +141,8 @@ def get_analitics():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    start = datetime.strptime(date_from, format('%Y-%m-%d'))
-    end = datetime.strptime(date_to, format('%Y-%m-%d'))
+    start = datetime.datetime.strptime(date_from, format('%Y-%m-%d'))
+    end = datetime.datetime.strptime(date_to, format('%Y-%m-%d'))
 
     likes = PostLike.query.filter(PostLike.timestamp >= start).filter(PostLike.timestamp <= end).all()
     print(len(likes))

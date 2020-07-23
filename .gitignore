@@ -155,3 +155,4 @@ newvenv/Scripts/pip3.exe
 newvenv/Scripts/python.exe
 newvenv/Scripts/pythonw.exe
 newvenv/pyvenv.cfg
+/migrations/
