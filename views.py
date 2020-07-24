@@ -7,7 +7,7 @@ from flask import jsonify, request, make_response, Response, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import app, db
-from models import User, Post, PostLike
+from models import User, Post, PostLike, Activity
 
 
 def token_required(f):
@@ -47,22 +47,27 @@ def create_user():
     password = generate_password_hash(data['password'], method='sha256')
 
     new_user = User(public_id=str(uuid.uuid4()), username=name, email=email, password=password)
-
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'New user created!'})
+    creation = Activity(user_id=new_user.id)
+    db.session.add(creation)
+    db.session.commit()
+
+    return jsonify({'message': 'New user named {0}, id: {1} was created!'.format(name, new_user.public_id)})
 
 
 @app.route('/login')
 def login():
     auth = request.authorization
-    print(str(auth))
 
     if not auth or not auth.username or not auth.password:
         return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
     user = User.query.filter_by(username=auth.username).first()
+
+    latest_login = Activity.query.filter_by(user_id=user.id).first()
+    latest_login.latest_login()
 
     if not user:
         return make_response('No such user', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
@@ -77,6 +82,22 @@ def login():
     return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
+@app.route('/users')
+@token_required
+def get_all_users(current_user):
+    users = User.query.order_by(User.username).all()
+
+    if not users:
+        return jsonify({'message': 'No users yet!'})
+
+    users_data = {}
+    for user in users:
+        num = user.id
+        id = user.public_id
+        users_data[num] = id
+
+    return jsonify(users_data)
+
 @app.route('/user/<public_id>')
 @token_required
 def get_one_user(current_user, public_id):
@@ -89,6 +110,10 @@ def get_one_user(current_user, public_id):
     user_data['public_id'] = user.public_id
     user_data['name'] = user.username
     user_data['password'] = user.password
+
+    activity = Activity.query.filter_by(user_id=user.id).first()
+    user_data['created'] = activity.creation
+    user_data['last_login'] = activity.login
 
     return jsonify({'user': user_data})
 
@@ -119,7 +144,6 @@ def like_action(current_user, user_id, post_id, action):
     print(posts)
 
     post = Post.query.filter_by(id=post_id).first_or_404()
-    print(post.body)
 
     user = User.query.filter_by(id=user_id).first()
 
@@ -147,4 +171,3 @@ def get_analitics():
     print(len(likes))
     status_code = Response(status=200)
     return status_code
-        # .order_by(Post.time)

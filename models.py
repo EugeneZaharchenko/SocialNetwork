@@ -2,15 +2,14 @@
 from app import db
 from datetime import datetime
 
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password = db.Column(db.String(128))
-    # timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     posts = db.relationship('Post', foreign_keys='Post.author_id', backref='author', lazy='dynamic')
+    activity = db.relationship("Activity", uselist=False, backref="user")
 
     liked = db.relationship(
         'PostLike',
@@ -36,13 +35,33 @@ class User(db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
+class Activity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
+
+    creation = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    login = db.Column(db.DateTime, index=True)
+    latest_activity = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
+    def latest_login(self):
+        login = Activity.query.filter_by(
+                id=self.id).update({'login': datetime.utcnow()})
+        print(datetime.utcnow())
+        # login.login = datetime.utcnow
+                # id=self.id).update({'login': datetime.utcnow})
+        db.session.commit()
+        # if not self.has_liked_post(post):
+        #     like = PostLike(user_id=self.id, post_id=post.id)
+        #     db.session.add(like)
+    # def __repr__(self):
+    #     return '<Post id {0} containing {1}>'.format(self.id, self.body)
+
 class PostLike(db.Model):
     __tablename__ = 'post_like'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
