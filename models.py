@@ -40,19 +40,19 @@ class Activity(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
 
     creation = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    login = db.Column(db.DateTime, index=True)
+    login = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     latest_activity = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     def latest_login(self):
         login = Activity.query.filter_by(
                 id=self.id).update({'login': datetime.utcnow()})
-        print(datetime.utcnow())
-        # login.login = datetime.utcnow
-                # id=self.id).update({'login': datetime.utcnow})
         db.session.commit()
-        # if not self.has_liked_post(post):
-        #     like = PostLike(user_id=self.id, post_id=post.id)
-        #     db.session.add(like)
+
+    def latest_usage(self):
+        activity = Activity.query.filter_by(
+                id=self.id).update({'latest_activity': datetime.utcnow()})
+        db.session.commit()
+
     # def __repr__(self):
     #     return '<Post id {0} containing {1}>'.format(self.id, self.body)
 

@@ -32,6 +32,13 @@ def token_required(f):
     return decorated
 
 
+def activity_fixed(current_user):
+    user = User.query.filter_by(id=current_user.id).first()
+
+    latest_login = Activity.query.filter_by(user_id=user.id).first()
+    latest_login.latest_usage()
+
+
 @app.route('/')
 def home():
     status_code = Response(status=200)
@@ -68,6 +75,7 @@ def login():
 
     latest_login = Activity.query.filter_by(user_id=user.id).first()
     latest_login.latest_login()
+    latest_login.latest_usage()
 
     if not user:
         return make_response('No such user', 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
@@ -96,11 +104,37 @@ def get_all_users(current_user):
         id = user.public_id
         users_data[num] = id
 
+    activity_fixed(current_user)
+
     return jsonify(users_data)
+
+
+@app.route('/user')
+@token_required
+def get_current_user(current_user):
+    user = User.query.filter_by(id=current_user.id).first()
+
+    if not user:
+        return jsonify({'message': 'No user found!'})
+
+    user_data = {}
+    user_data['public_id'] = user.public_id
+    user_data['name'] = user.username
+    user_data['password'] = user.password
+
+    activity = Activity.query.filter_by(user_id=user.id).first()
+    user_data['created'] = activity.creation
+    user_data['last_login'] = activity.login
+    user_data['last_actions'] = activity.latest_activity
+
+    activity_fixed(current_user)
+
+    return jsonify({'user': user_data})
+
 
 @app.route('/user/<public_id>')
 @token_required
-def get_one_user(current_user, public_id):
+def get_user_by_id(current_user, public_id):
     user = User.query.filter_by(public_id=public_id).first()
 
     if not user:
@@ -114,41 +148,44 @@ def get_one_user(current_user, public_id):
     activity = Activity.query.filter_by(user_id=user.id).first()
     user_data['created'] = activity.creation
     user_data['last_login'] = activity.login
+    user_data['last_actions'] = activity.latest_activity
+
+    activity_fixed(current_user)
 
     return jsonify({'user': user_data})
 
 
-@app.route('/user/<string:username>/add_post', methods=['POST'])
+@app.route('/user/add_post', methods=['POST'])
 @token_required
-def add_post(current_user, username):
+def add_post(current_user):
     data = request.get_json()
 
     body = data['body']
-    user = User.query.filter_by(username=username).first()
-    user_id = user.id
+    user = User.query.filter_by(id=current_user.id).first()
 
-    new_post = Post(body=body, author_id=user_id)
+    new_post = Post(body=body, author_id=user.id)
 
     db.session.add(new_post)
     db.session.commit()
 
-    return jsonify({'message': 'New post of user {} created!'.format(username)})
+    activity_fixed(current_user)
+
+    return jsonify({'message': 'New post of user {} created!'.format(user.username)})
 
 
-@app.route('/user/<int:user_id>/post/<int:post_id>/action/<string:action>', methods=['POST'])
+@app.route('/user/post/<int:post_id>/action/<string:action>', methods=['POST'])
 @token_required
-def like_action(current_user, user_id, post_id, action):
+def like_action(current_user, post_id, action):
     posts = Post.query.filter(Post.id == post_id).all()
     if len(posts) == 0:
         abort(404)
-    print(posts)
 
     post = Post.query.filter_by(id=post_id).first_or_404()
 
-    user = User.query.filter_by(id=user_id).first()
+    user = User.query.filter_by(id=current_user.id).first()
 
     if action == 'like':
-        post.recipient_id = user_id
+        post.recipient_id = current_user.id
         user.like_post(post)
         db.session.commit()
     if action == 'unlike':
@@ -156,11 +193,14 @@ def like_action(current_user, user_id, post_id, action):
         user.unlike_post(post)
         db.session.commit()
 
-    return jsonify({'message': 'New {0} of user {1} to post_id {2} created!'.format(action, user_id, post_id)})
+        activity_fixed(current_user)
+
+    return jsonify({'message': 'New {0} of user {1} to post_id {2} created!'.format(action, current_user.id, post_id)})
 
 
 @app.route('/analitics/')
-def get_analitics():
+@token_required
+def get_analitics(current_user):
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
@@ -168,6 +208,8 @@ def get_analitics():
     end = datetime.datetime.strptime(date_to, format('%Y-%m-%d'))
 
     likes = PostLike.query.filter(PostLike.timestamp >= start).filter(PostLike.timestamp <= end).all()
-    print(len(likes))
+
+    activity_fixed(current_user)
+
     status_code = Response(status=200)
     return status_code
