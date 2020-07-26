@@ -1,6 +1,6 @@
-# from config import DB_NAME
 from app import db
 from datetime import datetime
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,6 +35,7 @@ class User(db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
+
 class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
@@ -45,16 +46,14 @@ class Activity(db.Model):
 
     def latest_login(self):
         login = Activity.query.filter_by(
-                id=self.id).update({'login': datetime.utcnow()})
+            id=self.id).update({'login': datetime.utcnow()})
         db.session.commit()
 
     def latest_usage(self):
         activity = Activity.query.filter_by(
-                id=self.id).update({'latest_activity': datetime.utcnow()})
+            id=self.id).update({'latest_activity': datetime.utcnow()})
         db.session.commit()
 
-    # def __repr__(self):
-    #     return '<Post id {0} containing {1}>'.format(self.id, self.body)
 
 class PostLike(db.Model):
     __tablename__ = 'post_like'
@@ -62,6 +61,7 @@ class PostLike(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)

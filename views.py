@@ -207,9 +207,14 @@ def get_analitics(current_user):
     start = datetime.datetime.strptime(date_from, format('%Y-%m-%d'))
     end = datetime.datetime.strptime(date_to, format('%Y-%m-%d'))
 
-    likes = PostLike.query.filter(PostLike.timestamp >= start).filter(PostLike.timestamp <= end).all()
+    likes = PostLike.query.filter(PostLike.timestamp >= start)\
+        .filter(PostLike.timestamp <= end)\
+        .order_by(PostLike.timestamp).all()
+
+    likes_dates = [d.timestamp.day for d in likes]
+
+    likes_per_date = {x: likes_dates.count(x) for x in likes_dates}
 
     activity_fixed(current_user)
 
-    status_code = Response(status=200)
-    return status_code
+    return jsonify({'message': 'Likes quantity aggregated by dates are: {0}'.format(likes_per_date)})
