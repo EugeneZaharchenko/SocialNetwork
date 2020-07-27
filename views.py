@@ -173,7 +173,7 @@ def add_post(current_user):
     return jsonify({'message': 'New post of user {} created!'.format(user.username)})
 
 
-@app.route('/user/post/<int:post_id>/action/<string:action>', methods=['POST'])
+@app.route('/user/post/<int:post_id>/<string:action>', methods=['POST'])
 @token_required
 def like_action(current_user, post_id, action):
     posts = Post.query.filter(Post.id == post_id).all()
