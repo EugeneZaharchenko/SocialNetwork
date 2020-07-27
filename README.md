@@ -5,8 +5,8 @@ Simple REST API implemented by Flask framework. Token authentication is implemen
 To start working with service, run command:
 _python runserver.py_
 
-##Basic Features:
-####1. user signup
+## Basic Features:
+#### 1. user signup
     
 May be executed by endpoint:
 _http://127.0.0.1:5000/signup_ or _localhost:5000/signup_
@@ -25,7 +25,7 @@ with such **parameters in request body**:
   "message": "New user named Eugene, id: e88aadbe-ac82-4994-946f-ef18e6098042 was created!"
 }
 
-####2. user login
+#### 2. user login
     
 May executed by endpoint:
 _http://127.0.0.1:5000/login_ or _localhost:5000/login_
@@ -41,7 +41,7 @@ with such **parameters in request authorization header**:
   "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwdWJsaWNfaWQiOiJlODhhYWRiZS1hYzgyLTQ5OTQtOTQ2Zi1lZjE4ZTYwOTgwNDIiLCJleHAiOjE1OTU4NDU2Mjh9.GPDBNysEfOI2yU35gI2HJe8mJZT0LYadXMwFBqKP_3c"
 }
 
-####3. post creation
+#### 3. post creation
     
 May be executed by endpoint:
 _http://127.0.0.1:5000/user/add_post_ or _localhost:5000/user/add_post_
@@ -60,7 +60,7 @@ and such **parameters in request body**:
   "message": "New post of user Eugene created!"
 }
 
-####4.  post like
+#### 4.  post like
     
 May be executed by endpoint:
 _http://127.0.0.1:5000/user/post/2/like_ or _localhost:5000/user/post/2/like_
@@ -77,7 +77,7 @@ where /post/**2** - number of post.
   "message": "New like of user 3 to post_id 2 created!"
 }
 
-####5.  post unlike
+#### 5.  post unlike
     
 May be executed by endpoint:
 _http://127.0.0.1:5000/user/post/2/unlike_ or _localhost:5000/user/post/2/unlike_
@@ -94,7 +94,7 @@ where /post/**2** - number of post.
   "message": "New unlike of user 3 to post_id 2 created!"
 }
 
-####6.  analytics about how many likes was made
+#### 6.  analytics about how many likes was made
     
 May be executed by endpoint:
 _http://127.0.0.1:5000/analitics/?date_from=2020-07-22&date_to=2020-07-27_ or _localhost:/analitics/?date_from=2020-07-22&date_to=2020-07-27_
@@ -113,7 +113,7 @@ where: **date_from=2020-07-22** - start date, **date_to=2020-07-27** - end date 
 
 (likes on 25th, 26th days were previously stored in db).
 
-####7.  user activity - an endpoint which will show when user was login last time and when he mades a last request to the service
+#### 7.  user activity - an endpoint which will show when user was login last time and when he mades a last request to the service
     
 May be executed by endpoint:
 _http://127.0.0.1:5000/user_ or _localhost:/user_
@@ -142,8 +142,8 @@ where: **"created"** - user creation date;
        **"password"** - user's password (hashed);
        **"public_id"** - hashed user id, by which user may be identified to perform queries.
 
-###Some additional
-####8.   users - an endpoint which will show information about users registered in the service
+### Some additional
+#### 8.   users - an endpoint which will show information about users registered in the service
     
 May be executed by endpoint:
 _http://127.0.0.1:5000/users_ or _localhost:/users_
