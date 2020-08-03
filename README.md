@@ -2,6 +2,16 @@
 
 Simple REST API implemented by Flask framework. Token authentication is implemented (JWT is used).
 
+First of all, database should be created beforehand. To do this, run:
+    _flask db init_
+
+Then, to make initial migration run:
+_flask db migrate_
+
+To apply initial migration, run:
+_flask db upgrade_
+    
+
 To start working with service, run command:
 _python runserver.py_
 
